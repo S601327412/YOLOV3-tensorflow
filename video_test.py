@@ -1,13 +1,22 @@
 import numpy as np
 import tensorflow as tf
 import os
-import glob
 import cv2
 import time
 import os
-import shutil
-PATH_TO_CKPT = '11.pb'
-video_path = 'A1540510470160.mp4'
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--model_path",default='',type=str,help="The .pb model path")
+parser.add_argument("--video_path",default='',type=str,help="The test video path,if None,use capture")
+
+
+args = parser.parse_args()
+PATH_TO_CKPT = args.model_path
+video_path = args.video_path
+
+if not os.path.exists(PATH_TO_CKPT):
+    raise FileNotFoundError("The model file not found!")
 
 PATH_TO_LABELS = {1: "open_eyes", 2: "close_eyes", 3: "phone", 4: "smoke", 5: "yawn", 6: "side_face", 7: "face"}
 
@@ -32,10 +41,16 @@ def load_graph(model_path):
 detection_graph = load_graph(PATH_TO_CKPT)
 sess = tf.Session(graph=detection_graph)
 
-try:
-    stream = cv2.VideoCapture(video_path)
-except:
-    print("open file failed:{}".format(video_path))
+if video_path:
+    try:
+        stream = cv2.VideoCapture(video_path)
+    except:
+        raise FileNotFoundError("The video can't open!")
+elif not video_path:
+    try:
+        stream = cv2.VideoCapture(0)
+    except:
+        raise OSError("The capture is can't open")
 
 while True:
 
